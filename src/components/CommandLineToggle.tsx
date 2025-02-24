@@ -16,6 +16,13 @@ export const ArrayToggle = ({ command }: ArrayToggleProps) => {
     setIsExpanded(!isExpanded);
   };
 
+  const renderCollapsedValue = (value: unknown) => {
+    if (Array.isArray(value)) {
+      return `Array(${value.length})`;
+    }
+    return typeof value === 'string' ? `"${value}"` : String(value);
+  };
+
   const renderValue = (value: unknown) => {
     if (Array.isArray(value)) {
       return <ArrayToggle command={value} />;
@@ -60,7 +67,7 @@ export const ArrayToggle = ({ command }: ArrayToggleProps) => {
       <span style={{ display: 'inline-block', width: '10px', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
         ▶
       </span>
-      ({command.length}) [{command.join(', ')}]
+      ({command.length}) [{command.map(item => renderCollapsedValue(item)).join(', ')}]
       {isExpanded && renderArrayContents()}
     </div>
   );

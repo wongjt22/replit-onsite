@@ -1,7 +1,11 @@
 const FLAT_VAL_URL =
   "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev";
 
-const sessionId = crypto.randomUUID();
+let sessionId = crypto.randomUUID();
+
+export function resetSessionId() {
+  sessionId = crypto.randomUUID();
+}
 
 export async function evaluateCode(code: string): Promise<unknown> {
   const payload = {
