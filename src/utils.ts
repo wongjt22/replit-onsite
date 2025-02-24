@@ -1,13 +1,30 @@
 const FLAT_VAL_URL =
   "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev";
 
-let sessionId = crypto.randomUUID();
+// Keep track of sessions per tab
+const sessions = new Map<string, string>();
 
-export function resetSessionId() {
-  sessionId = crypto.randomUUID();
+export function getSessionId(tabId: string) {
+  console.log('Getting session for tab:', tabId, 'Current sessions:', sessions);
+  if (!sessions.has(tabId)) {
+    const newSessionId = crypto.randomUUID();
+    console.log('Creating new session for tab:', tabId, 'Session:', newSessionId);
+    sessions.set(tabId, newSessionId);
+  }
+  return sessions.get(tabId)!;
 }
 
-export async function evaluateCode(code: string): Promise<unknown> {
+export function resetSessionId(tabId: string) {
+  const newSessionId = crypto.randomUUID();
+  console.log('Resetting session for tab:', tabId, 'New session:', newSessionId);
+  sessions.set(tabId, newSessionId);
+  return newSessionId;
+}
+
+export async function evaluateCode(code: string, tabId: string): Promise<unknown> {
+  const sessionId = getSessionId(tabId);
+  console.log('Evaluating code for tab:', tabId, 'Session:', sessionId);
+
   const payload = {
     code: code,
     sessionId: sessionId,

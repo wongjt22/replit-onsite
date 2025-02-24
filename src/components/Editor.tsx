@@ -89,7 +89,6 @@ interface CommandLineProps {
 
 const CommandLine = ({ command }: CommandLineProps) => {
   const { value, isUserCommand, isError } = command;
-  console.log(value, typeof value);
 
   if (value === undefined) {
     return <div>undefined</div>;
@@ -122,49 +121,22 @@ const CommandHistory = ({ history }: CommandHistoryProps) => {
   );
 };
 
-export const Editor = () => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+interface EditorProps {
+  tabId: string;
+  history: HistoryItem[];
+  onHistoryUpdate: (tabId: string, input: string, result: unknown, isError?: boolean) => void;
+}
 
-  const clearConsole = () => {
-    setHistory([]);
-    resetSessionId();
-  };
-
+export const Editor = ({ tabId, history, onHistoryUpdate }: EditorProps) => {
   const handleCommand = async (input: string) => {
     try {
-      if (input.trim().toLowerCase() === 'clear') {
-        clearConsole();
-        return;
-      }
-
-      const result = await evaluateCode(input);
-      setHistory([
-        ...history,
-        { value: input, isUserCommand: true },
-        { value: result, isUserCommand: false }
-      ]);
+      const result = await evaluateCode(input, tabId);
+      onHistoryUpdate(tabId, input, result);
     } catch (error) {
       console.error('Error evaluating code:', error);
-      setHistory([
-        ...history,
-        { value: input, isUserCommand: true },
-        { value: error instanceof Error ? error.message : 'Unknown error', isUserCommand: false, isError: true }
-      ]);
+      onHistoryUpdate(tabId, input, error instanceof Error ? error.message : 'Unknown error', true);
     }
   };
-
-  // Add keyboard event listener for Command+K
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        clearConsole();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   return (
     <div
@@ -173,10 +145,11 @@ export const Editor = () => {
         color: '#0f0',
         padding: '1rem',
         fontFamily: 'monospace',
-        minHeight: '100vh',
-        width: '100vw',
+        height: '100%',
+        width: '100%',
         boxSizing: 'border-box',
         margin: 0,
+        overflow: 'auto'
       }}
     >
       <CommandHistory history={history} />

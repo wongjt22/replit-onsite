@@ -1,10 +1,10 @@
 import './App.css'
-import { Editor } from './components/Editor'
+import { EditorTabs } from './components/EditorTabs'
 
 export default function App() {
   return (
     <main>
-      <Editor />
+      <EditorTabs />
     </main>
   )
 }
