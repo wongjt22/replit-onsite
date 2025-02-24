@@ -1,13 +1,11 @@
 const FLAT_VAL_URL =
   "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev";
 
-export async function evaluateCode(code: string): Promise<string | undefined> {
+export async function evaluateCode(code: string): Promise<unknown> {
   const payload = {
     code: code,
     sessionId: "aab9f3ba-7465-4319-820b-555b2e15433d",
   };
-
-  console.log("Request code:", code);
 
   try {
     const response = await fetch(FLAT_VAL_URL + "/eval", {
@@ -20,21 +18,22 @@ export async function evaluateCode(code: string): Promise<string | undefined> {
     });
 
     if (!response.ok) {
+      const responseData = await response.json();
       return JSON.stringify(response.body);
     }
 
     const responseData = await response.json();
-    console.log("Response data:", responseData);
     const parsedResult = parseEvaluatedCode(responseData);
 
     return parsedResult;
   } catch (error) {
     console.error("Request failed", error);
+    return error.message
   }
 }
 
 interface SerializedItem {
-  type: "string" | "number" | "boolean" | "object" | "array";
+  type: "string" | "number" | "boolean" | "undefined" | "null" | "object" | "array";
   value: any;
 }
 
@@ -45,24 +44,26 @@ interface SerializedResponse {
   };
 }
 
-export const parseEvaluatedCode = (response: SerializedResponse): string => {
-  const idToData = new Map<string, any>();
+export const parseEvaluatedCode = (response: SerializedResponse): unknown => {
+  const idToData = new Map<string, unknown>();
 
-  function parse(id: string): any {
+  function parse(id: string): unknown {
     if (idToData.has(id)) {
       return idToData.get(id);
     }
 
     const item = response.serialized[id];
-    let data: any;
+    let data: unknown;
 
     switch (item.type) {
+      case "null":
+        data = null;
+        break;
+      case "undefined":
+        data = undefined;
+        break;
       case "boolean":
-        data = item.value;
-        break;
       case "number":
-        data = item.value;
-        break;
       case "string":
         data = item.value;
         break;
