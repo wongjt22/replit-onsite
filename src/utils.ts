@@ -1,37 +1,40 @@
-const FLAT_VAL_URL = "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev"
+const FLAT_VAL_URL =
+  "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev";
 
 export async function evaluateCode(code: string): Promise<string | undefined> {
-
   const payload = {
     code: code,
-    sessionId: "aab9f3ba-7465-4319-820b-555b2e15433d"
+    sessionId: "aab9f3ba-7465-4319-820b-555b2e15433d",
   };
+
+  console.log("Request code:", code);
 
   try {
     const response = await fetch(FLAT_VAL_URL + "/eval", {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return JSON.stringify(response.body);
     }
 
     const responseData = await response.json();
+    console.log("Response data:", responseData);
     const parsedResult = parseEvaluatedCode(responseData);
-    
-    return parsedResult
+
+    return parsedResult;
   } catch (error) {
-    console.error('Request failed', error);
+    console.error("Request failed", error);
   }
 }
 
 interface SerializedItem {
-  type: 'string' | 'number | object' | 'array';
+  type: "string" | "number" | "boolean" | "object" | "array";
   value: any;
 }
 
@@ -51,26 +54,29 @@ export const parseEvaluatedCode = (response: SerializedResponse): string => {
     }
 
     const item = response.serialized[id];
-    let data: any
+    let data: any;
 
     switch (item.type) {
-      case 'number':
+      case "boolean":
         data = item.value;
         break;
-      case 'string':
+      case "number":
         data = item.value;
         break;
-      case 'object':
+      case "string":
+        data = item.value;
+        break;
+      case "object":
         data = {};
         idToData.set(id, data);
-        
+
         for (const pair of item.value) {
           const key = parse(pair.key);
           const value = parse(pair.value);
           data[key] = value;
         }
         break;
-      case 'array':
+      case "array":
         data = [];
         idToData.set(id, data);
 
@@ -82,9 +88,9 @@ export const parseEvaluatedCode = (response: SerializedResponse): string => {
         throw new Error(`Unknown type: ${item.type}`);
     }
 
-    idToData.set(id, data)
-    return data
+    idToData.set(id, data);
+    return data;
   }
 
   return parse(response.root);
-}
+};
