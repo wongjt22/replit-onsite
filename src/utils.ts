@@ -1,10 +1,12 @@
 const FLAT_VAL_URL =
   "https://bb676fcf-ab50-48cb-96c9-8dd0d467d56e-00-22g00du4q7t0s.spock.replit.dev";
 
+const sessionId = crypto.randomUUID();
+
 export async function evaluateCode(code: string): Promise<unknown> {
   const payload = {
     code: code,
-    sessionId: "aab9f3ba-7465-4319-820b-555b2e15433d",
+    sessionId: sessionId,
   };
 
   try {
@@ -18,8 +20,8 @@ export async function evaluateCode(code: string): Promise<unknown> {
     });
 
     if (!response.ok) {
-      const responseData = await response.json();
-      return JSON.stringify(response.body);
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Unknown error occurred');
     }
 
     const responseData = await response.json();
@@ -28,13 +30,16 @@ export async function evaluateCode(code: string): Promise<unknown> {
     return parsedResult;
   } catch (error) {
     console.error("Request failed", error);
-    return error.message
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('Unknown error occurred');
   }
 }
 
 interface SerializedItem {
   type: "string" | "number" | "boolean" | "undefined" | "null" | "object" | "array";
-  value: any;
+  value: unknown;
 }
 
 interface SerializedResponse {

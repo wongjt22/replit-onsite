@@ -16,8 +16,8 @@ const CommandInput = ({ onSubmit }: CommandInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <span>$ </span>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', width: '100%' }}>
+      <span style={{ flexShrink: 0, marginRight: '0.5rem' }}>&gt;&gt;&gt; </span>
       <input
         type="text"
         value={input}
@@ -26,7 +26,13 @@ const CommandInput = ({ onSubmit }: CommandInputProps) => {
           backgroundColor: 'transparent',
           color: '#0f0',
           border: 'none',
-          outline: 'none'
+          outline: 'none',
+          width: '100%',
+          flexGrow: 1,
+          fontFamily: 'inherit',
+          fontSize: 'inherit',
+          padding: 0,
+          margin: 0
         }}
         autoFocus
       />
@@ -34,35 +40,44 @@ const CommandInput = ({ onSubmit }: CommandInputProps) => {
   );
 };
 
+interface HistoryItem {
+  value: unknown;
+  isUserCommand: boolean;
+  isError?: boolean;
+}
+
+interface CommandHistoryProps {
+  history: HistoryItem[];
+}
+
 interface CommandLineProps {
-  command: string;
+  command: HistoryItem;
 }
 
 const CommandLine = ({ command }: CommandLineProps) => {
-  console.log(command, typeof command)
-  if (command === undefined) {
-    return <div>$ undefined</div>;
+  const { value, isUserCommand, isError } = command;
+  console.log(value, typeof value);
+
+  if (value === undefined) {
+    return <div>&gt undefined</div>;
   }
-  if (command === null) {
-    return <div>$ null</div>;
+  if (value === null) {
+    return <div>&gt null</div>;
   }
 
-  if (Array.isArray(command)) {
-    return <ArrayToggle command={command} />;
+  if (Array.isArray(value)) {
+    return <ArrayToggle command={value} />;
   }
 
-  if (typeof command === 'object') {
-    return <ObjectToggle command={command} />;
+  if (typeof value === 'object') {
+    return <ObjectToggle command={value} />;
   }
-
   return (
-    <div>$ {command}</div>
+    <div style={{ color: isError ? '#f00' : '#0f0' }}>
+      {isUserCommand ? '>' : ''} {isUserCommand || isError ? String(value) : (typeof value === 'string' ? `"${value}"` : String(value))}
+    </div>
   );
 };
-
-interface CommandHistoryProps {
-  history: string[];
-}
 
 const CommandHistory = ({ history }: CommandHistoryProps) => {
   return (
@@ -75,14 +90,23 @@ const CommandHistory = ({ history }: CommandHistoryProps) => {
 };
 
 export const Editor = () => {
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   const handleCommand = async (input: string) => {
     try {
       const result = await evaluateCode(input);
-      setHistory([...history, input, result]);
+      setHistory([
+        ...history,
+        { value: input, isUserCommand: true },
+        { value: result, isUserCommand: false }
+      ]);
     } catch (error) {
       console.error('Error evaluating code:', error);
+      setHistory([
+        ...history,
+        { value: input, isUserCommand: true },
+        { value: error instanceof Error ? error.message : 'Unknown error', isUserCommand: false, isError: true }
+      ]);
     }
   };
 
